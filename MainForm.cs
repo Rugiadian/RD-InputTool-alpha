@@ -473,7 +473,7 @@ namespace RD_Tools
 
             btnStart = new Button
             {
-                Text = "▶ 시작 (F6)",
+                Text = "▶ 시작",
                 Dock = DockStyle.Fill,
                 BackColor = Color.FromArgb(46, 139, 87),
                 ForeColor = Color.White,
@@ -506,7 +506,7 @@ namespace RD_Tools
             // Full-Width ESC Warning Banner
             var lblGuide = new Label
             {
-                Text = "🚨 [ESC] 누르면 즉시 중지 (F6: 시작, F7: 정지)",
+                Text = "🚨 [ESC] 또는 [F7] 누르면 즉시 중지 (F8: 현재 좌표 등록)",
                 ForeColor = Color.FromArgb(165, 80, 15),
                 BackColor = Color.FromArgb(254, 250, 240),
                 BorderStyle = BorderStyle.FixedSingle,
@@ -769,13 +769,6 @@ namespace RD_Tools
                             if (_isRunning)
                             {
                                 StopAutoInput();
-                            }
-                        }
-                        else if (key == Keys.F6)
-                        {
-                            if (!_isRunning)
-                            {
-                                StartAutoInput();
                             }
                         }
                         else if (key == Keys.F7)

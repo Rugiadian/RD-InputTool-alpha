@@ -9,7 +9,7 @@ namespace RD_Tools
     public class EnergyBar : Control
     {
         private double _value = 0.0; // 0.0 to 1.0
-        private string _text = "⚪ 대기 중 (시작 버튼 또는 F6을 누르면 기동합니다)";
+        private string _text = "⚪ 대기 중 (시작 버튼을 누르면 기동합니다)";
         private bool _isActive = false;
         private int _shimmerOffset = 0;
         private readonly System.Windows.Forms.Timer _shimmerTimer;
