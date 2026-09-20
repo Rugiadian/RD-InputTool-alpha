@@ -65,7 +65,7 @@ namespace RD_Tools
             MinimumSize = new Size(520, 820);
             StartPosition = FormStartPosition.CenterScreen;
             Font = new Font("Malgun Gothic", 9f, FontStyle.Regular);
-            BackColor = Color.FromArgb(246, 248, 250);
+            BackColor = Color.FromArgb(250, 248, 243); // Warm Ivory
 
             // ==========================================
             // Bottom Panel: Large, Easy-to-Click TopMost Button
@@ -75,7 +75,7 @@ namespace RD_Tools
                 Dock = DockStyle.Bottom,
                 Height = 46,
                 Padding = new Padding(12, 6, 12, 8),
-                BackColor = Color.FromArgb(238, 241, 245)
+                BackColor = Color.FromArgb(242, 238, 231) // Warm Linen
             };
 
             btnTopMost = new Button
@@ -126,7 +126,8 @@ namespace RD_Tools
                 Padding = new Padding(10, 6, 10, 8),
                 Margin = new Padding(0, 0, 0, 12),
                 Font = new Font("Malgun Gothic", 9.5f, FontStyle.Bold),
-                ForeColor = Color.FromArgb(30, 35, 45)
+                ForeColor = Color.FromArgb(52, 44, 38),
+                BackColor = Color.FromArgb(255, 254, 250)
             };
 
             var textInner = new TableLayoutPanel
@@ -146,6 +147,8 @@ namespace RD_Tools
                 Height = 52,
                 Dock = DockStyle.Top,
                 Font = new Font("Malgun Gothic", 9.5f),
+                BackColor = Color.White,
+                ForeColor = Color.FromArgb(40, 35, 30),
                 Margin = new Padding(0, 2, 0, 4)
             };
 
@@ -194,7 +197,8 @@ namespace RD_Tools
                 Padding = new Padding(10, 6, 10, 8),
                 Margin = new Padding(0, 0, 0, 12),
                 Font = new Font("Malgun Gothic", 9.5f, FontStyle.Bold),
-                ForeColor = Color.FromArgb(30, 35, 45)
+                ForeColor = Color.FromArgb(52, 44, 38),
+                BackColor = Color.FromArgb(255, 254, 250)
             };
 
             var coordInner = new TableLayoutPanel
@@ -223,7 +227,7 @@ namespace RD_Tools
             {
                 Text = "🎯 클릭으로 좌표 지정",
                 Dock = DockStyle.Fill,
-                BackColor = Color.FromArgb(41, 128, 185),
+                BackColor = Color.FromArgb(197, 128, 32),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
                 Font = new Font("Malgun Gothic", 9f, FontStyle.Bold),
@@ -237,7 +241,7 @@ namespace RD_Tools
             {
                 Text = "📍 현재 위치 등록 (F8)",
                 Dock = DockStyle.Fill,
-                BackColor = Color.FromArgb(85, 95, 110),
+                BackColor = Color.FromArgb(112, 102, 92),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
                 Font = new Font("Malgun Gothic", 9f, FontStyle.Bold),
@@ -286,7 +290,8 @@ namespace RD_Tools
                 Padding = new Padding(10, 6, 10, 8),
                 Margin = new Padding(0, 0, 0, 12),
                 Font = new Font("Malgun Gothic", 9.5f, FontStyle.Bold),
-                ForeColor = Color.FromArgb(30, 35, 45)
+                ForeColor = Color.FromArgb(52, 44, 38),
+                BackColor = Color.FromArgb(255, 254, 250)
             };
 
             var repeatInner = new TableLayoutPanel
@@ -319,7 +324,7 @@ namespace RD_Tools
                 Width = 75,
                 Margin = new Padding(4, 0, 6, 0)
             };
-            var lblIntervalUnit = new Label { Text = "초 마다 입력", AutoSize = true, Padding = new Padding(0, 3, 0, 0), ForeColor = Color.DimGray };
+            var lblIntervalUnit = new Label { Text = "초 마다 입력", AutoSize = true, Padding = new Padding(0, 3, 0, 0), ForeColor = Color.FromArgb(120, 110, 100) };
             intervalRow.Controls.AddRange(new Control[] { lblInterval, numInterval, lblIntervalUnit });
 
             // 2) Duration Toggle Row
@@ -355,14 +360,14 @@ namespace RD_Tools
                 Text = "초 동안 반복 후 자동 종료",
                 AutoSize = true,
                 Padding = new Padding(0, 3, 0, 0),
-                ForeColor = Color.FromArgb(41, 128, 185)
+                ForeColor = Color.FromArgb(180, 100, 25)
             };
 
             chkEnableDuration.CheckedChanged += (s, e) =>
             {
                 numDuration.Enabled = chkEnableDuration.Checked;
                 lblDurationUnit.Text = chkEnableDuration.Checked ? "초 동안 반복 후 자동 종료" : "(꺼짐: 시간 제한 없이 계속)";
-                lblDurationUnit.ForeColor = chkEnableDuration.Checked ? Color.FromArgb(41, 128, 185) : Color.Gray;
+                lblDurationUnit.ForeColor = chkEnableDuration.Checked ? Color.FromArgb(180, 100, 25) : Color.FromArgb(160, 150, 140);
                 UpdateModeHint();
                 RefreshDashboardInitialValues();
             };
@@ -400,14 +405,14 @@ namespace RD_Tools
                 Text = "(꺼짐: 횟수 제한 없음)",
                 AutoSize = true,
                 Padding = new Padding(0, 3, 0, 0),
-                ForeColor = Color.Gray
+                ForeColor = Color.FromArgb(160, 150, 140)
             };
 
             chkEnableCount.CheckedChanged += (s, e) =>
             {
                 numCount.Enabled = chkEnableCount.Checked;
                 lblCountUnit.Text = chkEnableCount.Checked ? "회 입력 후 자동 종료" : "(꺼짐: 횟수 제한 없음)";
-                lblCountUnit.ForeColor = chkEnableCount.Checked ? Color.FromArgb(41, 128, 185) : Color.Gray;
+                lblCountUnit.ForeColor = chkEnableCount.Checked ? Color.FromArgb(180, 100, 25) : Color.FromArgb(160, 150, 140);
                 UpdateModeHint();
                 RefreshDashboardInitialValues();
             };
@@ -420,7 +425,7 @@ namespace RD_Tools
                 AutoSize = true,
                 Padding = new Padding(2, 1, 2, 2),
                 Font = new Font("Malgun Gothic", 8.5f, FontStyle.Bold),
-                ForeColor = Color.FromArgb(41, 128, 185)
+                ForeColor = Color.FromArgb(180, 100, 25)
             };
 
             repeatInner.Controls.Add(intervalRow);
@@ -440,7 +445,8 @@ namespace RD_Tools
                 Padding = new Padding(10, 6, 10, 8),
                 Margin = new Padding(0, 0, 0, 12),
                 Font = new Font("Malgun Gothic", 9.5f, FontStyle.Bold),
-                ForeColor = Color.FromArgb(30, 35, 45)
+                ForeColor = Color.FromArgb(52, 44, 38),
+                BackColor = Color.FromArgb(255, 254, 250)
             };
 
             var ctrlInner = new TableLayoutPanel
@@ -469,7 +475,7 @@ namespace RD_Tools
             {
                 Text = "▶ 시작 (F6)",
                 Dock = DockStyle.Fill,
-                BackColor = Color.FromArgb(39, 174, 96),
+                BackColor = Color.FromArgb(46, 139, 87),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
                 Font = new Font("Malgun Gothic", 11f, FontStyle.Bold),
@@ -483,7 +489,7 @@ namespace RD_Tools
             {
                 Text = "⏹ 정지 (F7 / ESC)",
                 Dock = DockStyle.Fill,
-                BackColor = Color.FromArgb(231, 76, 60),
+                BackColor = Color.FromArgb(205, 65, 55),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
                 Font = new Font("Malgun Gothic", 11f, FontStyle.Bold),
@@ -501,8 +507,8 @@ namespace RD_Tools
             var lblGuide = new Label
             {
                 Text = "🚨 [ESC] 누르면 즉시 중지 (F6: 시작, F7: 정지)",
-                ForeColor = Color.FromArgb(183, 79, 3),
-                BackColor = Color.FromArgb(254, 249, 231),
+                ForeColor = Color.FromArgb(165, 80, 15),
+                BackColor = Color.FromArgb(254, 250, 240),
                 BorderStyle = BorderStyle.FixedSingle,
                 Font = new Font("Malgun Gothic", 9f, FontStyle.Bold),
                 TextAlign = ContentAlignment.MiddleCenter,
@@ -526,7 +532,8 @@ namespace RD_Tools
                 Padding = new Padding(12, 10, 12, 12),
                 Margin = new Padding(0, 0, 0, 8),
                 Font = new Font("Malgun Gothic", 9.5f, FontStyle.Bold),
-                ForeColor = Color.FromArgb(30, 35, 45)
+                ForeColor = Color.FromArgb(52, 44, 38),
+                BackColor = Color.FromArgb(255, 254, 250)
             };
 
             var statusInner = new TableLayoutPanel
@@ -546,8 +553,8 @@ namespace RD_Tools
                 Dock = DockStyle.Top,
                 Height = 32,
                 Font = new Font("Malgun Gothic", 10f, FontStyle.Bold),
-                ForeColor = Color.FromArgb(90, 95, 105),
-                BackColor = Color.FromArgb(235, 238, 242),
+                ForeColor = Color.FromArgb(110, 100, 90),
+                BackColor = Color.FromArgb(242, 238, 230),
                 TextAlign = ContentAlignment.MiddleCenter,
                 Margin = new Padding(0, 0, 0, 8)
             };
@@ -569,15 +576,15 @@ namespace RD_Tools
             statsGrid.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
 
             // Card 1: 남은 횟수
-            var cardRemainCount = CreateStatCard("🎯 남은 횟수", out lblRemainCount, "무제한", Color.FromArgb(41, 128, 185));
+            var cardRemainCount = CreateStatCard("🎯 남은 횟수", out lblRemainCount, "무제한", Color.FromArgb(180, 100, 25));
             cardRemainCount.Margin = new Padding(0, 0, 4, 0);
 
             // Card 2: 남은 시간
-            var cardRemainTime = CreateStatCard("⏳ 남은 시간", out lblRemainTime, "10.0초", Color.FromArgb(142, 68, 173));
+            var cardRemainTime = CreateStatCard("⏳ 남은 시간", out lblRemainTime, "10.0초", Color.FromArgb(140, 70, 130));
             cardRemainTime.Margin = new Padding(2, 0, 2, 0);
 
             // Card 3: 현재 완료 횟수
-            var cardCompleted = CreateStatCard("📊 입력 완료", out lblCompletedCount, "0회", Color.FromArgb(39, 174, 96));
+            var cardCompleted = CreateStatCard("📊 입력 완료", out lblCompletedCount, "0회", Color.FromArgb(46, 139, 87));
             cardCompleted.Margin = new Padding(4, 0, 0, 0);
 
             statsGrid.Controls.Add(cardRemainCount, 0, 0);
@@ -591,7 +598,7 @@ namespace RD_Tools
                 Dock = DockStyle.Top,
                 AutoSize = true,
                 Font = new Font("Malgun Gothic", 9f, FontStyle.Bold),
-                ForeColor = Color.FromArgb(40, 45, 55),
+                ForeColor = Color.FromArgb(52, 44, 38),
                 Margin = new Padding(0, 2, 0, 4)
             };
 
@@ -610,7 +617,7 @@ namespace RD_Tools
                 Dock = DockStyle.Top,
                 AutoSize = true,
                 Font = new Font("Malgun Gothic", 9f, FontStyle.Bold),
-                ForeColor = Color.FromArgb(40, 45, 55),
+                ForeColor = Color.FromArgb(52, 44, 38),
                 Margin = new Padding(0, 2, 0, 4)
             };
 
@@ -632,7 +639,7 @@ namespace RD_Tools
                 Dock = DockStyle.Top,
                 Height = 26,
                 Font = new Font("Malgun Gothic", 9.5f, FontStyle.Regular),
-                ForeColor = Color.FromArgb(70, 75, 85),
+                ForeColor = Color.FromArgb(100, 90, 80),
                 TextAlign = ContentAlignment.MiddleLeft,
                 Padding = new Padding(2, 0, 0, 0)
             };
@@ -667,7 +674,7 @@ namespace RD_Tools
             var card = new Panel
             {
                 Dock = DockStyle.Fill,
-                BackColor = Color.White,
+                BackColor = Color.FromArgb(255, 254, 250),
                 BorderStyle = BorderStyle.FixedSingle,
                 Padding = new Padding(1)
             };
@@ -678,9 +685,9 @@ namespace RD_Tools
                 Dock = DockStyle.Top,
                 Height = 26,
                 Font = new Font("Malgun Gothic", 9f, FontStyle.Bold),
-                ForeColor = Color.FromArgb(100, 105, 115),
+                ForeColor = Color.FromArgb(120, 110, 100),
                 TextAlign = ContentAlignment.MiddleCenter,
-                BackColor = Color.FromArgb(246, 248, 251)
+                BackColor = Color.FromArgb(244, 240, 232)
             };
 
             valueLabel = new Label
@@ -690,7 +697,7 @@ namespace RD_Tools
                 Font = new Font("Malgun Gothic", 14f, FontStyle.Bold),
                 ForeColor = valueColor,
                 TextAlign = ContentAlignment.MiddleCenter,
-                BackColor = Color.White
+                BackColor = Color.FromArgb(255, 254, 250)
             };
 
             card.Controls.Add(lblTitle);
@@ -704,14 +711,14 @@ namespace RD_Tools
             if (TopMost)
             {
                 btnTopMost.Text = "📌 창 항상 위에 고정됨 [ON]  (클릭하여 해제)";
-                btnTopMost.BackColor = Color.FromArgb(41, 128, 185);
+                btnTopMost.BackColor = Color.FromArgb(197, 128, 32);
                 btnTopMost.ForeColor = Color.White;
             }
             else
             {
                 btnTopMost.Text = "📌 창 항상 위에 고정 [OFF]  (클릭하여 켜기)";
-                btnTopMost.BackColor = Color.FromArgb(225, 228, 234);
-                btnTopMost.ForeColor = Color.FromArgb(60, 65, 75);
+                btnTopMost.BackColor = Color.FromArgb(236, 232, 224);
+                btnTopMost.ForeColor = Color.FromArgb(85, 75, 65);
             }
         }
 
@@ -729,22 +736,22 @@ namespace RD_Tools
             if (chkEnableDuration.Checked && chkEnableCount.Checked)
             {
                 lblModeHint.Text = $"💡 설정: {numDuration.Value}초 경과 또는 {numCount.Value}회 입력 중 먼저 도달 시 자동 종료됩니다.";
-                lblModeHint.ForeColor = Color.FromArgb(41, 128, 185);
+                lblModeHint.ForeColor = Color.FromArgb(160, 95, 25);
             }
             else if (chkEnableDuration.Checked)
             {
                 lblModeHint.Text = $"💡 설정: {numDuration.Value}초 동안 반복 실행 후 자동 종료됩니다.";
-                lblModeHint.ForeColor = Color.FromArgb(41, 128, 185);
+                lblModeHint.ForeColor = Color.FromArgb(160, 95, 25);
             }
             else if (chkEnableCount.Checked)
             {
                 lblModeHint.Text = $"💡 설정: {numCount.Value}회 입력 후 자동 종료됩니다.";
-                lblModeHint.ForeColor = Color.FromArgb(41, 128, 185);
+                lblModeHint.ForeColor = Color.FromArgb(160, 95, 25);
             }
             else
             {
                 lblModeHint.Text = "💡 설정: [무제한 반복] 모드 - ESC 키 또는 정지 버튼을 누를 때까지 계속 입력합니다.";
-                lblModeHint.ForeColor = Color.FromArgb(192, 57, 43);
+                lblModeHint.ForeColor = Color.FromArgb(195, 65, 45);
             }
         }
 
@@ -847,8 +854,8 @@ namespace RD_Tools
 
             // Badge: Starting
             lblRunningBadge.Text = "⏳ 시작 준비 중 (카운트다운)...";
-            lblRunningBadge.BackColor = Color.FromArgb(254, 243, 199);
-            lblRunningBadge.ForeColor = Color.FromArgb(146, 64, 14);
+            lblRunningBadge.BackColor = Color.FromArgb(254, 244, 225);
+            lblRunningBadge.ForeColor = Color.FromArgb(160, 90, 20);
 
             energyBar.IsActive = false;
             energyBar.Value = 0.0;
@@ -869,8 +876,8 @@ namespace RD_Tools
 
                 // Badge: Active Running
                 lblRunningBadge.Text = "🟢 ● 기동 중 (RUNNING) - [ESC]로 즉시 정지";
-                lblRunningBadge.BackColor = Color.FromArgb(209, 250, 229);
-                lblRunningBadge.ForeColor = Color.FromArgb(6, 95, 70);
+                lblRunningBadge.BackColor = Color.FromArgb(232, 246, 235);
+                lblRunningBadge.ForeColor = Color.FromArgb(35, 120, 70);
 
                 energyBar.IsActive = true;
 
@@ -991,8 +998,8 @@ namespace RD_Tools
                 if (token.IsCancellationRequested)
                 {
                     lblRunningBadge.Text = "⏹ [ESC] 키로 중지됨";
-                    lblRunningBadge.BackColor = Color.FromArgb(254, 226, 226);
-                    lblRunningBadge.ForeColor = Color.FromArgb(153, 27, 27);
+                    lblRunningBadge.BackColor = Color.FromArgb(253, 236, 234);
+                    lblRunningBadge.ForeColor = Color.FromArgb(175, 45, 35);
 
                     energyBar.Value = 0.0;
                     energyBar.StatusText = "⏹ [ESC] 긴급 중지됨";
@@ -1002,8 +1009,8 @@ namespace RD_Tools
                 else
                 {
                     lblRunningBadge.Text = "✔ 작업 완료 (SUCCESS)";
-                    lblRunningBadge.BackColor = Color.FromArgb(219, 234, 254);
-                    lblRunningBadge.ForeColor = Color.FromArgb(30, 64, 175);
+                    lblRunningBadge.BackColor = Color.FromArgb(235, 245, 238);
+                    lblRunningBadge.ForeColor = Color.FromArgb(40, 125, 75);
 
                     energyBar.Value = 1.0;
                     energyBar.StatusText = "✔ 모든 반복 작업 완료!";
@@ -1017,8 +1024,8 @@ namespace RD_Tools
             catch (OperationCanceledException)
             {
                 lblRunningBadge.Text = "⏹ [ESC] 키로 즉시 중지됨";
-                lblRunningBadge.BackColor = Color.FromArgb(254, 226, 226);
-                lblRunningBadge.ForeColor = Color.FromArgb(153, 27, 27);
+                lblRunningBadge.BackColor = Color.FromArgb(253, 236, 234);
+                lblRunningBadge.ForeColor = Color.FromArgb(175, 45, 35);
 
                 energyBar.Value = 0.0;
                 energyBar.StatusText = "⏹ 중지됨";
@@ -1028,8 +1035,8 @@ namespace RD_Tools
             catch (Exception ex)
             {
                 lblRunningBadge.Text = "⚠️ 오류 발생";
-                lblRunningBadge.BackColor = Color.FromArgb(254, 226, 226);
-                lblRunningBadge.ForeColor = Color.FromArgb(153, 27, 27);
+                lblRunningBadge.BackColor = Color.FromArgb(253, 236, 234);
+                lblRunningBadge.ForeColor = Color.FromArgb(175, 45, 35);
                 lblStatus.Text = $"오류 발생: {ex.Message}";
             }
             finally
@@ -1068,13 +1075,13 @@ namespace RD_Tools
 
             if (running)
             {
-                btnStart.BackColor = Color.Gray;
-                btnStop.BackColor = Color.FromArgb(231, 76, 60);
+                btnStart.BackColor = Color.FromArgb(205, 198, 190);
+                btnStop.BackColor = Color.FromArgb(205, 65, 55);
             }
             else
             {
-                btnStart.BackColor = Color.FromArgb(39, 174, 96);
-                btnStop.BackColor = Color.Gray;
+                btnStart.BackColor = Color.FromArgb(46, 139, 87);
+                btnStop.BackColor = Color.FromArgb(205, 198, 190);
             }
         }
 
@@ -1089,13 +1096,13 @@ namespace RD_Tools
             numDuration.Value = Math.Clamp(_settings.DurationSeconds, numDuration.Minimum, numDuration.Maximum);
             numDuration.Enabled = _settings.EnableDuration;
             lblDurationUnit.Text = _settings.EnableDuration ? "초 동안 반복 후 자동 종료" : "(꺼짐: 시간 제한 없이 계속)";
-            lblDurationUnit.ForeColor = _settings.EnableDuration ? Color.FromArgb(41, 128, 185) : Color.Gray;
+            lblDurationUnit.ForeColor = _settings.EnableDuration ? Color.FromArgb(180, 100, 25) : Color.FromArgb(160, 150, 140);
 
             chkEnableCount.Checked = _settings.EnableCount;
             numCount.Value = Math.Clamp(_settings.RepeatCount, numCount.Minimum, numCount.Maximum);
             numCount.Enabled = _settings.EnableCount;
             lblCountUnit.Text = _settings.EnableCount ? "회 입력 후 자동 종료" : "(꺼짐: 횟수 제한 없음)";
-            lblCountUnit.ForeColor = _settings.EnableCount ? Color.FromArgb(41, 128, 185) : Color.Gray;
+            lblCountUnit.ForeColor = _settings.EnableCount ? Color.FromArgb(180, 100, 25) : Color.FromArgb(160, 150, 140);
 
             chkEnter.Checked = _settings.SendEnterAfterInput;
             chkClipboard.Checked = _settings.UseClipboardPaste;
