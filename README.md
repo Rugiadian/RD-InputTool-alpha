@@ -6,9 +6,11 @@
 
 ## 🚀 실행 방법
 
-- `Run_AutoInputTool.bat` 더블 클릭  
-  또는  
-- `Publish\RD_AutoInputTool.exe` 직접 실행
+- **`Run_AutoInputTool.bat` 더블 클릭 (권장)**:
+  - 이미 프로그램이 켜져 있더라도 **자동으로 기존 창을 닫고**, 소스 코드 수정 내역을 **초고속 자동 빌드하여 최신 버전으로 재실행**합니다.
+- **`Run_Dev_Watch.bat` 더블 클릭 (개발/실시간 반영 모드)**:
+  - .NET Hot Reload 모드로 기동되어, **코드를 수정하고 저장(Ctrl+S)하기만 하면 앱을 껐다 켜지 않아도 실시간으로 반영/자동 재실행**됩니다.
+- 또는 `Publish\RD_AutoInputTool.exe` 직접 실행
 
 ---
 

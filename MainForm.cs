@@ -239,6 +239,7 @@ namespace RD_Tools
         private GlobalKeyboardHook _keyboardHook;
         private CancellationTokenSource _cts;
         private bool _isRunning = false;
+        private bool _isEmergencyStop = false;
         private bool _hotkeysEnabled = true;
         private readonly AppSettings _settings;
 
@@ -1404,8 +1405,21 @@ namespace RD_Tools
             // Section 5 Controls
             if (!_isRunning)
             {
-                lblRunningBadge.BackColor = theme.StatusBadgeBg;
-                lblRunningBadge.ForeColor = theme.StatusBadgeFg;
+                if (lblRunningBadge.Text.Contains("중단") || lblRunningBadge.Text.Contains("중지"))
+                {
+                    lblRunningBadge.BackColor = Color.FromArgb(253, 236, 234);
+                    lblRunningBadge.ForeColor = Color.FromArgb(175, 45, 35);
+                }
+                else if (lblRunningBadge.Text.Contains("완료"))
+                {
+                    lblRunningBadge.BackColor = Color.FromArgb(235, 245, 238);
+                    lblRunningBadge.ForeColor = Color.FromArgb(40, 125, 75);
+                }
+                else
+                {
+                    lblRunningBadge.BackColor = theme.StatusBadgeBg;
+                    lblRunningBadge.ForeColor = theme.StatusBadgeFg;
+                }
             }
             lblEnergyTitle.ForeColor = theme.TextPrimary;
             lblProgressTitle.ForeColor = theme.TextPrimary;
@@ -1539,8 +1553,8 @@ namespace RD_Tools
                         {
                             if (_isRunning)
                             {
+                                _isEmergencyStop = true;
                                 StopAutoInput();
-                                lblStatus.Text = "🚨 [Alt+F2] 비상탈출 긴급 중지되었습니다!";
                                 SystemSounds.Hand.Play();
                             }
                         }));
@@ -1598,6 +1612,75 @@ namespace RD_Tools
             lblStatus.Text = $"{pointName} 현재 마우스 위치 등록됨: X={p.X}, Y={p.Y}";
         }
 
+        private void SetProgressBarState(int state)
+        {
+            try
+            {
+                if (progressBar != null && progressBar.IsHandleCreated)
+                {
+                    NativeMethods.SendMessage(progressBar.Handle, NativeMethods.PBM_SETSTATE, (IntPtr)state, IntPtr.Zero);
+                }
+            }
+            catch { }
+        }
+
+        private void StopProgressBarMarquee()
+        {
+            try
+            {
+                if (progressBar != null)
+                {
+                    progressBar.MarqueeAnimationSpeed = 0;
+                    progressBar.Style = ProgressBarStyle.Blocks;
+                    if (progressBar.IsHandleCreated)
+                    {
+                        NativeMethods.SendMessage(progressBar.Handle, NativeMethods.PBM_SETMARQUEE, IntPtr.Zero, IntPtr.Zero);
+                    }
+                }
+            }
+            catch { }
+        }
+
+        private void ApplyStoppedState(int currentIteration, bool isEmergency = false)
+        {
+            string stopReason = isEmergency
+                ? "🚨 [Alt+F2] 비상탈출 긴급 중단됨"
+                : (_hotkeysEnabled ? "⏹ [F2] 키 또는 정지로 중단됨" : "⏹ 정지 버튼으로 중단됨");
+
+            lblRunningBadge.Text = stopReason;
+            lblRunningBadge.BackColor = Color.FromArgb(253, 236, 234);
+            lblRunningBadge.ForeColor = Color.FromArgb(175, 45, 35);
+
+            energyBar.IsActive = false;
+            energyBar.IsStopped = true;
+            energyBar.Value = 0.0;
+            energyBar.StatusText = "⏹ 작업 중단됨";
+
+            lblEnergyTitle.Text = "⚡ 실시간 기동 에너지 바: ⏹ 중단됨";
+
+            StopProgressBarMarquee();
+            SetProgressBarState(NativeMethods.PBST_ERROR);
+
+            bool isUnlimited = !chkEnableDuration.Checked && !chkEnableCount.Checked;
+            if (isUnlimited)
+            {
+                progressBar.Value = 0;
+                lblProgressTitle.Text = currentIteration > 0
+                    ? $"📈 전체 작업 진행률: ⏹ 작업 중단됨 (총 {currentIteration}회 입력)"
+                    : "📈 전체 작업 진행률: ⏹ 시작 전 중단됨";
+            }
+            else
+            {
+                lblProgressTitle.Text = currentIteration > 0
+                    ? $"📈 전체 작업 진행률: ⏹ 작업 중단됨 ({progressBar.Value}%, 총 {currentIteration}회 입력)"
+                    : "📈 전체 작업 진행률: ⏹ 시작 전 중단됨";
+            }
+
+            lblStatus.Text = currentIteration > 0
+                ? $"⏹ 작업이 중단되었습니다. (총 {currentIteration}회 입력 완료)"
+                : "⏹ 작업이 시작 전 중단되었습니다.";
+        }
+
         private async void StartAutoInput()
         {
             if (_isRunning) return;
@@ -1653,14 +1736,24 @@ namespace RD_Tools
             _cts = new CancellationTokenSource();
             var token = _cts.Token;
             _isRunning = true;
+            _isEmergencyStop = false;
             UpdateUIState(true);
 
             SaveCurrentSettings();
 
             // Initial dashboard badge
             energyBar.IsActive = false;
+            energyBar.IsStopped = false;
             energyBar.Value = 0.0;
             energyBar.StatusText = "⏳ 준비 중...";
+            lblEnergyTitle.Text = "⚡ 실시간 기동 에너지 바 (다음 입력 충전 게이지):";
+
+            StopProgressBarMarquee();
+            SetProgressBarState(NativeMethods.PBST_NORMAL);
+            progressBar.Value = 0;
+            lblProgressTitle.Text = "📈 전체 작업 진행률:";
+
+            int currentIteration = 0;
 
             try
             {
@@ -1670,18 +1763,20 @@ namespace RD_Tools
                     lblRunningBadge.Text = "⏳ 시작 준비 중 (카운트다운)...";
                     lblRunningBadge.BackColor = Color.FromArgb(254, 244, 225);
                     lblRunningBadge.ForeColor = Color.FromArgb(160, 90, 20);
+                    lblProgressTitle.Text = $"📈 전체 작업 진행률: 시작 대기 중 ({startDelaySec:F1}초)...";
 
                     int totalDelayMs = (int)(startDelaySec * 1000);
                     var delaySw = Stopwatch.StartNew();
 
                     while (delaySw.ElapsedMilliseconds < totalDelayMs)
                     {
-                        if (token.IsCancellationRequested) return;
+                        token.ThrowIfCancellationRequested();
 
                         double remainSec = Math.Max(0, (totalDelayMs - delaySw.ElapsedMilliseconds) / 1000.0);
                         string cancelGuide = _hotkeysEnabled ? "[F2 누르면 취소]" : "[정지 누르면 취소]";
                         lblStatus.Text = $"⏳ {remainSec:F1}초 후 입력이 시작됩니다... {cancelGuide}";
                         energyBar.StatusText = $"⏳ {remainSec:F1}초 후 시작... {cancelGuide}";
+                        lblProgressTitle.Text = $"📈 전체 작업 진행률: 시작 대기 중 ({remainSec:F1}초)...";
 
                         int step = Math.Min(100, (int)(totalDelayMs - delaySw.ElapsedMilliseconds));
                         if (step <= 0) break;
@@ -1689,7 +1784,7 @@ namespace RD_Tools
                     }
                 }
 
-                if (token.IsCancellationRequested) return;
+                token.ThrowIfCancellationRequested();
 
                 // Active Running Badge
                 lblRunningBadge.Text = _hotkeysEnabled
@@ -1699,9 +1794,9 @@ namespace RD_Tools
                 lblRunningBadge.ForeColor = Color.FromArgb(35, 120, 70);
 
                 energyBar.IsActive = true;
+                lblEnergyTitle.Text = "⚡ 실시간 기동 에너지 바 (다음 입력 충전 게이지):";
 
                 var stopwatch = Stopwatch.StartNew();
-                int currentIteration = 0;
 
                 while (!token.IsCancellationRequested)
                 {
@@ -1737,19 +1832,19 @@ namespace RD_Tools
                     // 2. Point 2 Sequential Input (if enabled)
                     if (enablePoint2)
                     {
-                        if (token.IsCancellationRequested) break;
+                        token.ThrowIfCancellationRequested();
 
                         energyBar.StatusText = $"⏳ 포인트 2 대기 중... ({numPointInterval.Value:F1}초)";
                         var ptSw = Stopwatch.StartNew();
                         while (ptSw.ElapsedMilliseconds < pointIntervalMs)
                         {
-                            if (token.IsCancellationRequested) break;
+                            token.ThrowIfCancellationRequested();
                             int ptStep = Math.Min(25, (int)(pointIntervalMs - ptSw.ElapsedMilliseconds));
                             if (ptStep <= 0) break;
                             await Task.Delay(ptStep, token);
                         }
 
-                        if (token.IsCancellationRequested) break;
+                        token.ThrowIfCancellationRequested();
 
                         // Move & Click Point 2
                         energyBar.StatusText = $"💥 [포인트 2] 입력 실행 중... (제 {currentIteration}회차)";
@@ -1795,7 +1890,12 @@ namespace RD_Tools
                         // Unlimited mode
                         string stopGuide = _hotkeysEnabled ? "[F2로 정지]" : "[정지 버튼 클릭]";
                         lblStatus.Text = $"▶ 기동 중... (입력: {currentIteration}회, 경과: {elapsedMs / 1000.0:F1}초) {stopGuide}";
-                        progressBar.Style = ProgressBarStyle.Marquee;
+                        if (progressBar.Style != ProgressBarStyle.Marquee)
+                        {
+                            progressBar.Style = ProgressBarStyle.Marquee;
+                            progressBar.MarqueeAnimationSpeed = 30;
+                        }
+                        lblProgressTitle.Text = $"📈 전체 작업 진행률: 무제한 반복 기동 중 (총 {currentIteration}회 입력)...";
                     }
                     else if (enableDuration && enableCount)
                     {
@@ -1804,8 +1904,12 @@ namespace RD_Tools
                         int maxPercent = Math.Clamp((int)(Math.Max(timePercent, countPercent) * 100), 0, 100);
 
                         lblStatus.Text = $"▶ 기동 중... [남은 시간: {remainDurationMs / 1000.0:F1}초 | 남은 횟수: {remainCount}회]";
-                        progressBar.Style = ProgressBarStyle.Blocks;
+                        if (progressBar.Style != ProgressBarStyle.Blocks)
+                        {
+                            StopProgressBarMarquee();
+                        }
                         progressBar.Value = maxPercent;
+                        lblProgressTitle.Text = $"📈 전체 작업 진행률 ({maxPercent}%):";
 
                         if (elapsedMs >= durationMs || currentIteration >= targetCount)
                         {
@@ -1816,8 +1920,12 @@ namespace RD_Tools
                     {
                         int percent = Math.Clamp((int)((double)elapsedMs / durationMs * 100), 0, 100);
                         lblStatus.Text = $"▶ 기동 중... [남은 시간: {remainDurationMs / 1000.0:F1}초] ({currentIteration}회 입력 완료)";
-                        progressBar.Style = ProgressBarStyle.Blocks;
+                        if (progressBar.Style != ProgressBarStyle.Blocks)
+                        {
+                            StopProgressBarMarquee();
+                        }
                         progressBar.Value = percent;
+                        lblProgressTitle.Text = $"📈 전체 작업 진행률 ({percent}%):";
 
                         if (elapsedMs >= durationMs)
                         {
@@ -1828,8 +1936,12 @@ namespace RD_Tools
                     {
                         int percent = Math.Clamp((int)((double)currentIteration / targetCount * 100), 0, 100);
                         lblStatus.Text = $"▶ 기동 중... [남은 횟수: {remainCount}회] ({currentIteration}/{targetCount}회 완료)";
-                        progressBar.Style = ProgressBarStyle.Blocks;
+                        if (progressBar.Style != ProgressBarStyle.Blocks)
+                        {
+                            StopProgressBarMarquee();
+                        }
                         progressBar.Value = percent;
+                        lblProgressTitle.Text = $"📈 전체 작업 진행률 ({percent}%):";
 
                         if (currentIteration >= targetCount)
                         {
@@ -1873,13 +1985,7 @@ namespace RD_Tools
 
                 if (token.IsCancellationRequested)
                 {
-                    lblRunningBadge.Text = _hotkeysEnabled ? "⏹ [F2] 키 또는 정지로 중지됨" : "⏹ 정지 버튼으로 중지됨";
-                    lblRunningBadge.BackColor = Color.FromArgb(253, 236, 234);
-                    lblRunningBadge.ForeColor = Color.FromArgb(175, 45, 35);
-
-                    energyBar.Value = 0.0;
-                    energyBar.StatusText = "⏹ 작업 중지됨";
-                    lblStatus.Text = $"⏹ 작업이 중지되었습니다. (총 {currentIteration}회 입력 완료)";
+                    ApplyStoppedState(currentIteration, _isEmergencyStop);
                 }
                 else
                 {
@@ -1887,29 +1993,44 @@ namespace RD_Tools
                     lblRunningBadge.BackColor = Color.FromArgb(235, 245, 238);
                     lblRunningBadge.ForeColor = Color.FromArgb(40, 125, 75);
 
+                    energyBar.IsActive = false;
+                    energyBar.IsStopped = false;
                     energyBar.Value = 1.0;
                     energyBar.StatusText = "✔ 작업 완료";
+
+                    lblEnergyTitle.Text = "⚡ 실시간 기동 에너지 바: ✔ 작업 완료";
+
+                    StopProgressBarMarquee();
+                    SetProgressBarState(NativeMethods.PBST_NORMAL);
+                    progressBar.Value = 100;
+                    lblProgressTitle.Text = "📈 전체 작업 진행률: ✔ 작업 완료 (100%)";
+
                     lblRemainCount.Text = "0 회";
                     if (enableDuration) lblRemainTime.Text = durUnit == "분" ? "0.0 분" : "0.0 초";
                     lblStatus.Text = $"✔ 작업이 완료되었습니다. (총 {currentIteration}회 입력 완료)";
-                    progressBar.Value = 100;
                 }
             }
             catch (OperationCanceledException)
             {
-                lblRunningBadge.Text = "⏹ 즉시 중지됨";
-                lblRunningBadge.BackColor = Color.FromArgb(253, 236, 234);
-                lblRunningBadge.ForeColor = Color.FromArgb(175, 45, 35);
-
-                energyBar.Value = 0.0;
-                energyBar.StatusText = "⏹ 중지됨";
-                lblStatus.Text = "⏹ 즉시 중지되었습니다.";
+                ApplyStoppedState(currentIteration, _isEmergencyStop);
             }
             catch (Exception ex)
             {
                 lblRunningBadge.Text = "⚠️ 오류 발생";
                 lblRunningBadge.BackColor = Color.FromArgb(253, 236, 234);
                 lblRunningBadge.ForeColor = Color.FromArgb(175, 45, 35);
+
+                energyBar.IsActive = false;
+                energyBar.IsStopped = true;
+                energyBar.Value = 0.0;
+                energyBar.StatusText = "⚠️ 오류 발생으로 중단됨";
+
+                lblEnergyTitle.Text = "⚡ 실시간 기동 에너지 바: ⚠️ 중단됨";
+
+                StopProgressBarMarquee();
+                SetProgressBarState(NativeMethods.PBST_ERROR);
+                lblProgressTitle.Text = "📈 전체 작업 진행률: ⚠️ 오류 발생으로 중단됨";
+
                 lblStatus.Text = $"오류 발생: {ex.Message}";
             }
             finally
@@ -1917,7 +2038,7 @@ namespace RD_Tools
                 InputSimulator.ReleaseStuckKeys();
                 _isRunning = false;
                 energyBar.IsActive = false;
-                progressBar.Style = ProgressBarStyle.Blocks;
+                StopProgressBarMarquee();
                 UpdateUIState(false);
             }
         }
