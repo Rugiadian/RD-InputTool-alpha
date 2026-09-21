@@ -282,17 +282,19 @@ namespace RD_Tools
 
         public MainForm()
         {
+            _isUpdatingHotkeyUI = true;
             _settings = AppSettings.Load();
             InitializeComponent();
             ApplySettingsToUI();
             SetupGlobalKeyboardHook();
+            _isUpdatingHotkeyUI = false;
         }
 
         private void InitializeComponent()
         {
             Text = "RD 오토 입력 툴 (Auto Input Tool)";
             AutoScaleMode = AutoScaleMode.Dpi;
-            Size = new Size(620, 1140);
+            Size = new Size(620, 1160);
             MinimumSize = new Size(560, 860);
             StartPosition = FormStartPosition.CenterScreen;
             Font = new Font("Malgun Gothic", 9f, FontStyle.Regular);
@@ -1454,7 +1456,13 @@ namespace RD_Tools
 
         private void OnHotkeyControlChanged()
         {
-            if (_isUpdatingHotkeyUI) return;
+            if (_isUpdatingHotkeyUI ||
+                cboStartMod == null || cboStartKey == null ||
+                cboStopMod == null || cboStopKey == null ||
+                cboEmergencyMod == null || cboEmergencyKey == null)
+            {
+                return;
+            }
 
             string startMod = ModFromDisplay(cboStartMod.SelectedItem?.ToString());
             string startKey = cboStartKey.SelectedItem?.ToString() ?? "F1";
