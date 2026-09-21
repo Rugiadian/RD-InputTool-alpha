@@ -211,6 +211,46 @@ namespace RD_Tools
         private Button btnStop;
         private Label lblGuide;
 
+        // Custom Hotkey Controls
+        private TableLayoutPanel pnlHotkeys;
+        private Label lblStartHk;
+        private ComboBox cboStartMod;
+        private Label lblPlus1;
+        private ComboBox cboStartKey;
+        private Button btnRecordStart;
+
+        private Label lblStopHk;
+        private ComboBox cboStopMod;
+        private Label lblPlus2;
+        private ComboBox cboStopKey;
+        private Button btnRecordStop;
+
+        private Label lblEmergencyHk;
+        private ComboBox cboEmergencyMod;
+        private Label lblPlus3;
+        private ComboBox cboEmergencyKey;
+        private Button btnRecordEmergency;
+
+        private Label lblHkTip;
+        private Button btnResetHotkeys;
+
+        private bool _isUpdatingHotkeyUI = false;
+        private bool _isConfiguringHotkey = false;
+
+        private static readonly string[] ModifierOptions = new[]
+        {
+            "없음", "Alt", "Ctrl", "Shift", "Ctrl + Alt", "Ctrl + Shift", "Alt + Shift"
+        };
+
+        private static readonly string[] KeyOptions = new[]
+        {
+            "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
+            "Pause", "Escape", "Space", "Tab", "Insert", "Delete", "Home", "End", "PageUp", "PageDown",
+            "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+            "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+            "NumPad0", "NumPad1", "NumPad2", "NumPad3", "NumPad4", "NumPad5", "NumPad6", "NumPad7", "NumPad8", "NumPad9"
+        };
+
         // Section 5: Dashboard / Status
         private GroupBox grpStatus;
         private Panel cardRemainCount;
@@ -372,8 +412,8 @@ namespace RD_Tools
                 UpdateHotkeyButtonUI();
                 SystemSounds.Beep.Play();
                 lblStatus.Text = _hotkeysEnabled
-                    ? "단축키 활성화됨 (Alt+F1: 시작, F2: 정지, Alt+F2: 비상탈출)"
-                    : "단축키 비활성 중 (비상탈출 단축키 Alt+F2는 항상 동작)";
+                    ? $"단축키 활성화됨 ({_settings.HotkeyStart}: 시작, {_settings.HotkeyStop}: 정지, {_settings.HotkeyEmergency}: 긴급탈출)"
+                    : $"단축키 비활성 중 (긴급탈출 단축키 {_settings.HotkeyEmergency}는 항상 동작)";
             };
 
             bottomTable.Controls.Add(btnTopMost, 0, 0);
@@ -1040,11 +1080,11 @@ namespace RD_Tools
             grpRepeat.Controls.Add(repeatInner);
 
             // ==========================================
-            // 4. 실행 및 단축키 안내 그룹 (Controls)
+            // 4. 실행 및 단축키 설정 그룹 (Controls)
             // ==========================================
             grpControl = new GroupBox
             {
-                Text = " 4. 실행 및 단축키 안내 ",
+                Text = " 4. 실행 및 단축키 설정 ",
                 Dock = DockStyle.Top,
                 AutoSize = true,
                 Padding = new Padding(10, 6, 10, 8),
@@ -1057,7 +1097,7 @@ namespace RD_Tools
                 Dock = DockStyle.Top,
                 AutoSize = true,
                 ColumnCount = 1,
-                RowCount = 2,
+                RowCount = 3,
                 Font = new Font("Malgun Gothic", 9f, FontStyle.Regular)
             };
             ctrlInner.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
@@ -1076,7 +1116,7 @@ namespace RD_Tools
 
             btnStart = new Button
             {
-                Text = "▶ 시작 (Alt+F1)",
+                Text = "▶ 시작",
                 Dock = DockStyle.Fill,
                 BackColor = Color.FromArgb(46, 139, 87),
                 ForeColor = Color.White,
@@ -1090,7 +1130,7 @@ namespace RD_Tools
 
             btnStop = new Button
             {
-                Text = "⏹ 정지 (F2)",
+                Text = "⏹ 정지",
                 Dock = DockStyle.Fill,
                 BackColor = Color.FromArgb(205, 65, 55),
                 ForeColor = Color.White,
@@ -1109,17 +1149,101 @@ namespace RD_Tools
             // Warning / Guide Banner for Shortcuts
             lblGuide = new Label
             {
-                Text = "🚨 [Alt+F1] 시작  |  [F2] 즉시 정지",
                 BorderStyle = BorderStyle.FixedSingle,
                 Font = new Font("Malgun Gothic", 9f, FontStyle.Bold),
                 TextAlign = ContentAlignment.MiddleCenter,
                 Dock = DockStyle.Top,
                 Height = 30,
-                Margin = new Padding(0, 0, 0, 2)
+                Margin = new Padding(0, 0, 0, 6)
             };
+
+            // Hotkey Customization Panel
+            pnlHotkeys = new TableLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                AutoSize = true,
+                ColumnCount = 5,
+                RowCount = 4,
+                Margin = new Padding(0, 2, 0, 2),
+                Padding = new Padding(2, 2, 2, 2)
+            };
+            pnlHotkeys.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 125f)); // Title
+            pnlHotkeys.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 105f)); // Modifier
+            pnlHotkeys.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20f));  // +
+            pnlHotkeys.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 105f)); // Key
+            pnlHotkeys.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));  // Capture button
+
+            // Row 0: Start Hotkey
+            lblStartHk = new Label { Text = "▶ 시작 단축키 :", AutoSize = true, Anchor = AnchorStyles.Left, Font = new Font("Malgun Gothic", 9f, FontStyle.Bold) };
+            cboStartMod = CreateModCombo();
+            lblPlus1 = new Label { Text = "+", AutoSize = false, TextAlign = ContentAlignment.MiddleCenter, Dock = DockStyle.Fill, Font = new Font("Malgun Gothic", 9f, FontStyle.Bold) };
+            cboStartKey = CreateKeyCombo();
+            btnRecordStart = CreateRecordButton("⌨ 감지");
+            btnRecordStart.Click += (s, e) => CaptureHotkey("▶ 시작 단축키", cboStartMod, cboStartKey, _settings.HotkeyStart);
+
+            pnlHotkeys.Controls.Add(lblStartHk, 0, 0);
+            pnlHotkeys.Controls.Add(cboStartMod, 1, 0);
+            pnlHotkeys.Controls.Add(lblPlus1, 2, 0);
+            pnlHotkeys.Controls.Add(cboStartKey, 3, 0);
+            pnlHotkeys.Controls.Add(btnRecordStart, 4, 0);
+
+            // Row 1: Stop Hotkey
+            lblStopHk = new Label { Text = "⏹ 정지 단축키 :", AutoSize = true, Anchor = AnchorStyles.Left, Font = new Font("Malgun Gothic", 9f, FontStyle.Bold) };
+            cboStopMod = CreateModCombo();
+            lblPlus2 = new Label { Text = "+", AutoSize = false, TextAlign = ContentAlignment.MiddleCenter, Dock = DockStyle.Fill, Font = new Font("Malgun Gothic", 9f, FontStyle.Bold) };
+            cboStopKey = CreateKeyCombo();
+            btnRecordStop = CreateRecordButton("⌨ 감지");
+            btnRecordStop.Click += (s, e) => CaptureHotkey("⏹ 정지 단축키", cboStopMod, cboStopKey, _settings.HotkeyStop);
+
+            pnlHotkeys.Controls.Add(lblStopHk, 0, 1);
+            pnlHotkeys.Controls.Add(cboStopMod, 1, 1);
+            pnlHotkeys.Controls.Add(lblPlus2, 2, 1);
+            pnlHotkeys.Controls.Add(cboStopKey, 3, 1);
+            pnlHotkeys.Controls.Add(btnRecordStop, 4, 1);
+
+            // Row 2: Emergency Hotkey (Default: Alt + F4)
+            lblEmergencyHk = new Label { Text = "🚨 긴급탈출 단축키 :", AutoSize = true, Anchor = AnchorStyles.Left, Font = new Font("Malgun Gothic", 9f, FontStyle.Bold) };
+            cboEmergencyMod = CreateModCombo();
+            lblPlus3 = new Label { Text = "+", AutoSize = false, TextAlign = ContentAlignment.MiddleCenter, Dock = DockStyle.Fill, Font = new Font("Malgun Gothic", 9f, FontStyle.Bold) };
+            cboEmergencyKey = CreateKeyCombo();
+            btnRecordEmergency = CreateRecordButton("⌨ 감지");
+            btnRecordEmergency.Click += (s, e) => CaptureHotkey("🚨 긴급탈출 단축키", cboEmergencyMod, cboEmergencyKey, _settings.HotkeyEmergency);
+
+            pnlHotkeys.Controls.Add(lblEmergencyHk, 0, 2);
+            pnlHotkeys.Controls.Add(cboEmergencyMod, 1, 2);
+            pnlHotkeys.Controls.Add(lblPlus3, 2, 2);
+            pnlHotkeys.Controls.Add(cboEmergencyKey, 3, 2);
+            pnlHotkeys.Controls.Add(btnRecordEmergency, 4, 2);
+
+            // Row 3: Bottom info & Reset button
+            lblHkTip = new Label
+            {
+                Text = "※ 변경 시 즉시 반영 및 저장됩니다. (긴급탈출은 단축키 OFF 시에도 항상 동작)",
+                AutoSize = true,
+                Anchor = AnchorStyles.Left,
+                Font = new Font("Malgun Gothic", 8.25f, FontStyle.Regular),
+                Margin = new Padding(0, 4, 0, 0)
+            };
+            btnResetHotkeys = new Button
+            {
+                Text = "🔄 기본값",
+                Dock = DockStyle.Fill,
+                Height = 26,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Malgun Gothic", 8.5f, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                Margin = new Padding(4, 2, 0, 0)
+            };
+            btnResetHotkeys.FlatAppearance.BorderSize = 0;
+            btnResetHotkeys.Click += (s, e) => ResetHotkeysToDefault();
+
+            pnlHotkeys.Controls.Add(lblHkTip, 0, 3);
+            pnlHotkeys.SetColumnSpan(lblHkTip, 4);
+            pnlHotkeys.Controls.Add(btnResetHotkeys, 4, 3);
 
             ctrlInner.Controls.Add(btnTable);
             ctrlInner.Controls.Add(lblGuide);
+            ctrlInner.Controls.Add(pnlHotkeys);
             grpControl.Controls.Add(ctrlInner);
 
             // ==========================================
@@ -1260,6 +1384,144 @@ namespace RD_Tools
             return card;
         }
 
+        private static string ModToDisplay(string mod)
+        {
+            if (string.IsNullOrEmpty(mod) || mod.Equals("None", StringComparison.OrdinalIgnoreCase) || mod == "없음")
+                return "없음";
+            if (mod.Equals("Ctrl+Alt", StringComparison.OrdinalIgnoreCase)) return "Ctrl + Alt";
+            if (mod.Equals("Ctrl+Shift", StringComparison.OrdinalIgnoreCase)) return "Ctrl + Shift";
+            if (mod.Equals("Alt+Shift", StringComparison.OrdinalIgnoreCase)) return "Alt + Shift";
+            return mod;
+        }
+
+        private static string ModFromDisplay(string display)
+        {
+            if (string.IsNullOrEmpty(display) || display == "없음" || display.Equals("None", StringComparison.OrdinalIgnoreCase))
+                return "None";
+            if (display == "Ctrl + Alt") return "Ctrl+Alt";
+            if (display == "Ctrl + Shift") return "Ctrl+Shift";
+            if (display == "Alt + Shift") return "Alt+Shift";
+            return display;
+        }
+
+        private ComboBox CreateModCombo()
+        {
+            var cbo = new ComboBox
+            {
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Width = 100,
+                Font = new Font("Malgun Gothic", 9f, FontStyle.Regular),
+                Cursor = Cursors.Hand,
+                Margin = new Padding(0, 1, 0, 1)
+            };
+            cbo.Items.AddRange(ModifierOptions);
+            cbo.SelectedIndex = 0;
+            cbo.SelectedIndexChanged += (s, e) => OnHotkeyControlChanged();
+            return cbo;
+        }
+
+        private ComboBox CreateKeyCombo()
+        {
+            var cbo = new ComboBox
+            {
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Width = 100,
+                Font = new Font("Malgun Gothic", 9f, FontStyle.Regular),
+                Cursor = Cursors.Hand,
+                Margin = new Padding(0, 1, 0, 1)
+            };
+            cbo.Items.AddRange(KeyOptions);
+            cbo.SelectedIndex = 0;
+            cbo.SelectedIndexChanged += (s, e) => OnHotkeyControlChanged();
+            return cbo;
+        }
+
+        private Button CreateRecordButton(string text = "⌨ 감지")
+        {
+            var btn = new Button
+            {
+                Text = text,
+                Dock = DockStyle.Fill,
+                Height = 26,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Malgun Gothic", 8.5f, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                Margin = new Padding(4, 1, 0, 1)
+            };
+            btn.FlatAppearance.BorderSize = 0;
+            return btn;
+        }
+
+        private void OnHotkeyControlChanged()
+        {
+            if (_isUpdatingHotkeyUI) return;
+
+            string startMod = ModFromDisplay(cboStartMod.SelectedItem?.ToString());
+            string startKey = cboStartKey.SelectedItem?.ToString() ?? "F1";
+
+            string stopMod = ModFromDisplay(cboStopMod.SelectedItem?.ToString());
+            string stopKey = cboStopKey.SelectedItem?.ToString() ?? "F2";
+
+            string emgMod = ModFromDisplay(cboEmergencyMod.SelectedItem?.ToString());
+            string emgKey = cboEmergencyKey.SelectedItem?.ToString() ?? "F4";
+
+            _settings.HotkeyStart = new HotkeyConfig(startMod, startKey);
+            _settings.HotkeyStop = new HotkeyConfig(stopMod, stopKey);
+            _settings.HotkeyEmergency = new HotkeyConfig(emgMod, emgKey);
+            _settings.Save();
+
+            UpdateHotkeyButtonUI();
+            UpdateModeHint();
+        }
+
+        private void CaptureHotkey(string targetName, ComboBox cboMod, ComboBox cboKey, HotkeyConfig currentConfig)
+        {
+            _isConfiguringHotkey = true;
+            try
+            {
+                using (var dlg = new HotkeyCaptureDialog(targetName, currentConfig, _currentTheme?.IsDark ?? false))
+                {
+                    if (dlg.ShowDialog(this) == DialogResult.OK && dlg.ResultConfig != null)
+                    {
+                        _isUpdatingHotkeyUI = true;
+                        cboMod.SelectedItem = ModToDisplay(dlg.ResultConfig.Modifier);
+                        if (!cboKey.Items.Contains(dlg.ResultConfig.Key))
+                        {
+                            cboKey.Items.Add(dlg.ResultConfig.Key);
+                        }
+                        cboKey.SelectedItem = dlg.ResultConfig.Key;
+                        _isUpdatingHotkeyUI = false;
+
+                        OnHotkeyControlChanged();
+                        SystemSounds.Beep.Play();
+                        lblStatus.Text = $"{targetName} 단축키가 [{dlg.ResultConfig}]로 변경되었습니다.";
+                    }
+                }
+            }
+            finally
+            {
+                _isConfiguringHotkey = false;
+            }
+        }
+
+        private void ResetHotkeysToDefault()
+        {
+            _isUpdatingHotkeyUI = true;
+            cboStartMod.SelectedItem = "Alt";
+            cboStartKey.SelectedItem = "F1";
+
+            cboStopMod.SelectedItem = "없음";
+            cboStopKey.SelectedItem = "F2";
+
+            cboEmergencyMod.SelectedItem = "Alt";
+            cboEmergencyKey.SelectedItem = "F4";
+            _isUpdatingHotkeyUI = false;
+
+            OnHotkeyControlChanged();
+            SystemSounds.Beep.Play();
+            lblStatus.Text = "단축키가 기본값으로 복원되었습니다. (시작: Alt+F1, 정지: F2, 긴급탈출: Alt+F4)";
+        }
+
         // ==========================================
         // Theme Engine
         // ==========================================
@@ -1372,6 +1634,32 @@ namespace RD_Tools
 
             // Section 4 Controls
             ApplyThemeToGuide();
+            if (pnlHotkeys != null)
+            {
+                lblStartHk.ForeColor = theme.TextPrimary;
+                lblStopHk.ForeColor = theme.TextPrimary;
+                lblEmergencyHk.ForeColor = theme.IsDark ? Color.FromArgb(245, 140, 140) : Color.FromArgb(195, 50, 50);
+                lblPlus1.ForeColor = theme.TextMuted;
+                lblPlus2.ForeColor = theme.TextMuted;
+                lblPlus3.ForeColor = theme.TextMuted;
+                lblHkTip.ForeColor = theme.TextMuted;
+
+                cboStartMod.BackColor = theme.InputBg; cboStartMod.ForeColor = theme.InputFg;
+                cboStartKey.BackColor = theme.InputBg; cboStartKey.ForeColor = theme.InputFg;
+                cboStopMod.BackColor = theme.InputBg; cboStopMod.ForeColor = theme.InputFg;
+                cboStopKey.BackColor = theme.InputBg; cboStopKey.ForeColor = theme.InputFg;
+                cboEmergencyMod.BackColor = theme.InputBg; cboEmergencyMod.ForeColor = theme.InputFg;
+                cboEmergencyKey.BackColor = theme.InputBg; cboEmergencyKey.ForeColor = theme.InputFg;
+
+                Color recordBtnBg = theme.IsDark ? Color.FromArgb(55, 60, 68) : Color.FromArgb(235, 230, 222);
+                btnRecordStart.BackColor = recordBtnBg; btnRecordStart.ForeColor = theme.TextPrimary;
+                btnRecordStop.BackColor = recordBtnBg; btnRecordStop.ForeColor = theme.TextPrimary;
+                btnRecordEmergency.BackColor = theme.IsDark ? Color.FromArgb(70, 50, 50) : Color.FromArgb(245, 225, 225);
+                btnRecordEmergency.ForeColor = theme.IsDark ? Color.FromArgb(250, 150, 150) : Color.FromArgb(190, 50, 50);
+
+                btnResetHotkeys.BackColor = theme.IsDark ? Color.FromArgb(50, 54, 60) : Color.FromArgb(230, 226, 218);
+                btnResetHotkeys.ForeColor = theme.TextSecondary;
+            }
 
             // Section 5 Controls
             lblEnergyTitle.ForeColor = theme.TextPrimary;
@@ -1401,13 +1689,13 @@ namespace RD_Tools
 
             if (!_hotkeysEnabled)
             {
-                lblGuide.Text = "⚠️ 단축키 비활성 상태  |  [비상탈출 긴급정지: Alt+F2]";
+                lblGuide.Text = $"⚠️ 단축키 비활성 상태  |  [긴급탈출 정지: {_settings.HotkeyEmergency}]";
                 lblGuide.BackColor = _currentTheme.BannerBg;
                 lblGuide.ForeColor = _currentTheme.IsDark ? Color.FromArgb(245, 170, 70) : Color.FromArgb(190, 80, 20);
             }
             else
             {
-                lblGuide.Text = "🚨 [Alt+F1] 시작  |  [F2] 정지  (비상탈출: Alt+F2)";
+                lblGuide.Text = $"🚨 [{_settings.HotkeyStart}] 시작  |  [{_settings.HotkeyStop}] 정지  (긴급탈출: {_settings.HotkeyEmergency})";
                 lblGuide.BackColor = _currentTheme.BannerBg;
                 lblGuide.ForeColor = _currentTheme.BannerFg;
             }
@@ -1433,15 +1721,15 @@ namespace RD_Tools
         {
             if (_hotkeysEnabled)
             {
-                btnToggleHotkeys.Text = "⌨ 단축키 활성 [ON] (Alt+F1/F2)";
+                btnToggleHotkeys.Text = $"⌨ 단축키 활성 [ON] ({_settings.HotkeyStart}/{_settings.HotkeyStop})";
                 btnToggleHotkeys.BackColor = Color.FromArgb(46, 139, 87);
                 btnToggleHotkeys.ForeColor = Color.White;
-                btnStart.Text = "▶ 시작 (Alt+F1)";
-                btnStop.Text = "⏹ 정지 (F2)";
+                btnStart.Text = $"▶ 시작 ({_settings.HotkeyStart})";
+                btnStop.Text = $"⏹ 정지 ({_settings.HotkeyStop})";
             }
             else
             {
-                btnToggleHotkeys.Text = "단축키 비활성 중. 긴급탈출 Alt + F2";
+                btnToggleHotkeys.Text = $"단축키 비활성 중. 긴급탈출 {_settings.HotkeyEmergency}";
                 btnToggleHotkeys.BackColor = _currentTheme?.IsDark == true ? Color.FromArgb(70, 72, 78) : Color.FromArgb(145, 138, 130);
                 btnToggleHotkeys.ForeColor = Color.White;
                 btnStart.Text = "▶ 시작";
@@ -1501,8 +1789,8 @@ namespace RD_Tools
             else
             {
                 lblModeHint.Text = _hotkeysEnabled
-                    ? $"💡 설정: [무제한 반복] 모드 - Alt+F1/F2/Alt+F2 키 또는 버튼으로 조작합니다. (간격: {numInterval.Value}{intUnit})"
-                    : $"💡 설정: [무제한 반복] 모드 - 정지 버튼 또는 긴급탈출(Alt+F2)로 중지합니다. (간격: {numInterval.Value}{intUnit})";
+                    ? $"💡 설정: [무제한 반복] 모드 - {_settings.HotkeyStart}/{_settings.HotkeyStop}/{_settings.HotkeyEmergency} 키 또는 버튼으로 조작합니다. (간격: {numInterval.Value}{intUnit})"
+                    : $"💡 설정: [무제한 반복] 모드 - 정지 버튼 또는 긴급탈출({_settings.HotkeyEmergency})로 중지합니다. (간격: {numInterval.Value}{intUnit})";
                 lblModeHint.ForeColor = _currentTheme?.IsDark == true ? Color.FromArgb(245, 100, 90) : Color.FromArgb(195, 65, 45);
             }
         }
@@ -1512,45 +1800,48 @@ namespace RD_Tools
             try
             {
                 _keyboardHook = new GlobalKeyboardHook();
-                _keyboardHook.KeyDown += key =>
+                _keyboardHook.KeyDown += (sender, e) =>
                 {
-                    bool altPressed = (NativeMethods.GetAsyncKeyState(NativeMethods.VK_MENU) & 0x8000) != 0;
+                    if (_isConfiguringHotkey) return;
 
-                    // 1. Emergency Escape: Alt + F2 ALWAYS stops auto input regardless of _hotkeysEnabled!
-                    if (key == Keys.F2 && altPressed)
+                    // 1. Emergency Escape: ALWAYS stops auto input regardless of _hotkeysEnabled!
+                    if (_settings.HotkeyEmergency != null && _settings.HotkeyEmergency.Matches(e.Key, e.Alt, e.Control, e.Shift))
                     {
-                        BeginInvoke(new Action(() =>
+                        if (_isRunning)
                         {
-                            if (_isRunning)
+                            e.Handled = true; // Block Alt+F4 from closing target application
+                            _isEmergencyStop = true;
+                            BeginInvoke(new Action(() =>
                             {
-                                _isEmergencyStop = true;
                                 StopAutoInput();
                                 SystemSounds.Hand.Play();
-                            }
-                        }));
+                            }));
+                        }
                         return;
                     }
 
                     // 2. Regular hotkeys only active when _hotkeysEnabled is true
                     if (!_hotkeysEnabled) return;
 
-                    BeginInvoke(new Action(() =>
+                    if (_settings.HotkeyStart != null && _settings.HotkeyStart.Matches(e.Key, e.Alt, e.Control, e.Shift))
                     {
-                        if (key == Keys.F1 && altPressed)
+                        if (!_isRunning)
                         {
-                            if (!_isRunning)
-                            {
-                                StartAutoInput();
-                            }
+                            e.Handled = true;
+                            BeginInvoke(new Action(() => StartAutoInput()));
                         }
-                        else if (key == Keys.F2)
+                        return;
+                    }
+
+                    if (_settings.HotkeyStop != null && _settings.HotkeyStop.Matches(e.Key, e.Alt, e.Control, e.Shift))
+                    {
+                        if (_isRunning)
                         {
-                            if (_isRunning)
-                            {
-                                StopAutoInput();
-                            }
+                            e.Handled = true;
+                            BeginInvoke(new Action(() => StopAutoInput()));
                         }
-                    }));
+                        return;
+                    }
                 };
             }
             catch
@@ -1588,8 +1879,8 @@ namespace RD_Tools
             energyBar.IsStopped = true;
             energyBar.Value = 0.0;
             energyBar.StatusText = isEmergency
-                ? "🚨 [Alt+F2] 비상탈출 긴급 중단됨"
-                : (_hotkeysEnabled ? "⏹ [F2] 키 또는 정지로 중단됨" : "⏹ 정지 버튼으로 중단됨");
+                ? $"🚨 [{_settings.HotkeyEmergency}] 비상탈출 긴급 중단됨"
+                : (_hotkeysEnabled ? $"⏹ [{_settings.HotkeyStop}] 키 또는 정지로 중단됨" : "⏹ 정지 버튼으로 중단됨");
 
             lblEnergyTitle.Text = "⚡ 실시간 기동 에너지 바: ⏹ 중단됨";
 
@@ -1681,7 +1972,7 @@ namespace RD_Tools
                         token.ThrowIfCancellationRequested();
 
                         double remainSec = Math.Max(0, (totalDelayMs - delaySw.ElapsedMilliseconds) / 1000.0);
-                        string cancelGuide = _hotkeysEnabled ? "[F2 누르면 취소]" : "[정지 누르면 취소]";
+                        string cancelGuide = _hotkeysEnabled ? $"[{_settings.HotkeyStop} 누르면 취소]" : "[정지 누르면 취소]";
                         lblStatus.Text = $"⏳ {remainSec:F1}초 후 입력이 시작됩니다... {cancelGuide}";
                         energyBar.StatusText = $"⏳ {remainSec:F1}초 후 시작... {cancelGuide}";
 
@@ -1786,7 +2077,7 @@ namespace RD_Tools
                     if (!enableDuration && !enableCount)
                     {
                         // Unlimited mode
-                        string stopGuide = _hotkeysEnabled ? "[F2로 정지]" : "[정지 버튼 클릭]";
+                        string stopGuide = _hotkeysEnabled ? $"[{_settings.HotkeyStop}로 정지]" : "[정지 버튼 클릭]";
                         lblStatus.Text = $"▶ 기동 중... (입력: {currentIteration}회, 경과: {elapsedMs / 1000.0:F1}초) {stopGuide}";
                     }
                     else if (enableDuration && enableCount)
@@ -1950,6 +2241,21 @@ namespace RD_Tools
             chkClipboard.Enabled = !running;
             numClickDelay.Enabled = !running;
 
+            // Custom Hotkey Controls
+            cboStartMod.Enabled = !running;
+            cboStartKey.Enabled = !running;
+            btnRecordStart.Enabled = !running;
+
+            cboStopMod.Enabled = !running;
+            cboStopKey.Enabled = !running;
+            btnRecordStop.Enabled = !running;
+
+            cboEmergencyMod.Enabled = !running;
+            cboEmergencyKey.Enabled = !running;
+            btnRecordEmergency.Enabled = !running;
+
+            btnResetHotkeys.Enabled = !running;
+
             if (running)
             {
                 btnStart.BackColor = _currentTheme?.IsDark == true ? Color.FromArgb(70, 75, 80) : Color.FromArgb(205, 198, 190);
@@ -2056,10 +2362,31 @@ namespace RD_Tools
             }
             ApplyTheme(targetTheme);
 
+            ApplyHotkeysToUI();
             UpdateTopMostButtonUI();
             UpdateHotkeyButtonUI();
             UpdateModeHint();
             RefreshDashboardInitialValues();
+        }
+
+        private void ApplyHotkeysToUI()
+        {
+            _isUpdatingHotkeyUI = true;
+            cboStartMod.SelectedItem = ModToDisplay(_settings.HotkeyStart?.Modifier);
+            if (!cboStartKey.Items.Contains(_settings.HotkeyStart?.Key))
+                cboStartKey.Items.Add(_settings.HotkeyStart?.Key);
+            cboStartKey.SelectedItem = _settings.HotkeyStart?.Key;
+
+            cboStopMod.SelectedItem = ModToDisplay(_settings.HotkeyStop?.Modifier);
+            if (!cboStopKey.Items.Contains(_settings.HotkeyStop?.Key))
+                cboStopKey.Items.Add(_settings.HotkeyStop?.Key);
+            cboStopKey.SelectedItem = _settings.HotkeyStop?.Key;
+
+            cboEmergencyMod.SelectedItem = ModToDisplay(_settings.HotkeyEmergency?.Modifier);
+            if (!cboEmergencyKey.Items.Contains(_settings.HotkeyEmergency?.Key))
+                cboEmergencyKey.Items.Add(_settings.HotkeyEmergency?.Key);
+            cboEmergencyKey.SelectedItem = _settings.HotkeyEmergency?.Key;
+            _isUpdatingHotkeyUI = false;
         }
 
         private void SaveCurrentSettings()
@@ -2092,6 +2419,11 @@ namespace RD_Tools
             _settings.AlwaysOnTop = TopMost;
             _settings.EnableHotkeys = _hotkeysEnabled;
             _settings.SelectedTheme = cboTheme.SelectedItem?.ToString() ?? "아이보리 웜";
+
+            _settings.HotkeyStart = new HotkeyConfig(ModFromDisplay(cboStartMod.SelectedItem?.ToString()), cboStartKey.SelectedItem?.ToString() ?? "F1");
+            _settings.HotkeyStop = new HotkeyConfig(ModFromDisplay(cboStopMod.SelectedItem?.ToString()), cboStopKey.SelectedItem?.ToString() ?? "F2");
+            _settings.HotkeyEmergency = new HotkeyConfig(ModFromDisplay(cboEmergencyMod.SelectedItem?.ToString()), cboEmergencyKey.SelectedItem?.ToString() ?? "F4");
+
             _settings.Save();
         }
 

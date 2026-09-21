@@ -20,6 +20,7 @@ namespace RD_Tools
         public const uint KEYEVENTF_KEYUP = 0x0002;
         public const uint KEYEVENTF_UNICODE = 0x0004;
 
+        public const byte VK_SHIFT = 0x10;
         public const byte VK_CONTROL = 0x11;
         public const byte VK_MENU = 0x12; // Alt key
         public const byte VK_V = 0x56;
