@@ -213,7 +213,6 @@ namespace RD_Tools
 
         // Section 5: Dashboard / Status
         private GroupBox grpStatus;
-        private Label lblRunningBadge;
         private Panel cardRemainCount;
         private Label lblCardTitle1;
         private Label lblRemainCount;
@@ -226,8 +225,6 @@ namespace RD_Tools
 
         private Label lblEnergyTitle;
         private EnergyBar energyBar;
-        private Label lblProgressTitle;
-        private ProgressBar progressBar;
         private Label lblStatus;
 
         // Bottom Bar
@@ -255,8 +252,8 @@ namespace RD_Tools
         {
             Text = "RD 오토 입력 툴 (Auto Input Tool)";
             AutoScaleMode = AutoScaleMode.Dpi;
-            Size = new Size(620, 1260);
-            MinimumSize = new Size(560, 960);
+            Size = new Size(620, 1140);
+            MinimumSize = new Size(560, 860);
             StartPosition = FormStartPosition.CenterScreen;
             Font = new Font("Malgun Gothic", 9f, FontStyle.Regular);
 
@@ -344,7 +341,7 @@ namespace RD_Tools
             {
                 Dock = DockStyle.Fill,
                 FlatStyle = FlatStyle.Flat,
-                Font = new Font("Malgun Gothic", 9.5f, FontStyle.Bold),
+                Font = new Font("Malgun Gothic", 9f, FontStyle.Bold),
                 Cursor = Cursors.Hand,
                 Margin = new Padding(0, 0, 4, 0)
             };
@@ -889,7 +886,7 @@ namespace RD_Tools
             lblIntervalUnit = new Label { Text = "마다 입력", AutoSize = true, Padding = new Padding(0, 3, 0, 0) };
             intervalRow.Controls.AddRange(new Control[] { lblInterval, numInterval, cboIntervalUnit, lblIntervalUnit });
 
-            // 2) Duration Toggle Row (with Seconds / Minutes ComboBox)
+            // 2) Duration Toggle Row (with Seconds / Minutes / Hours ComboBox)
             var durationRow = new FlowLayoutPanel
             {
                 Dock = DockStyle.Top,
@@ -921,27 +918,36 @@ namespace RD_Tools
             cboDurationUnit = new ComboBox
             {
                 DropDownStyle = ComboBoxStyle.DropDownList,
-                Width = 60,
+                Width = 65,
                 Font = new Font("Malgun Gothic", 9f, FontStyle.Regular),
                 Margin = new Padding(0, 0, 6, 0),
                 Cursor = Cursors.Hand
             };
-            cboDurationUnit.Items.AddRange(new object[] { "초", "분" });
+            cboDurationUnit.Items.AddRange(new object[] { "초", "분", "시간" });
             cboDurationUnit.SelectedIndex = 0;
             cboDurationUnit.SelectedIndexChanged += (s, e) =>
             {
                 string unit = cboDurationUnit.SelectedItem?.ToString() ?? "초";
-                if (unit == "분")
+                if (unit == "시간")
+                {
+                    numDuration.Minimum = 0.01m;
+                    numDuration.Maximum = 720m;
+                    numDuration.Increment = 0.1m;
+                    numDuration.DecimalPlaces = 2;
+                }
+                else if (unit == "분")
                 {
                     numDuration.Minimum = 0.1m;
                     numDuration.Maximum = 1440m;
                     numDuration.Increment = 0.5m;
+                    numDuration.DecimalPlaces = 1;
                 }
                 else
                 {
                     numDuration.Minimum = 0.5m;
                     numDuration.Maximum = 86400m;
                     numDuration.Increment = 1m;
+                    numDuration.DecimalPlaces = 1;
                 }
                 numDuration.Value = Math.Clamp(numDuration.Value, numDuration.Minimum, numDuration.Maximum);
                 lblDurationUnit.Text = chkEnableDuration.Checked ? $"{unit} 동안 반복 후 자동 종료" : "(꺼짐: 시간 제한 없이 계속)";
@@ -1134,21 +1140,10 @@ namespace RD_Tools
                 Dock = DockStyle.Top,
                 AutoSize = true,
                 ColumnCount = 1,
-                RowCount = 7,
+                RowCount = 4,
                 Font = new Font("Malgun Gothic", 9f, FontStyle.Regular)
             };
             statusInner.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-
-            // Running Status Badge
-            lblRunningBadge = new Label
-            {
-                Text = "⚪ 대기 중 (준비 완료)",
-                Dock = DockStyle.Top,
-                Height = 32,
-                Font = new Font("Malgun Gothic", 10f, FontStyle.Bold),
-                TextAlign = ContentAlignment.MiddleCenter,
-                Margin = new Padding(0, 0, 0, 8)
-            };
 
             // Stat Cards Row: Height 86px
             var statsGrid = new TableLayoutPanel
@@ -1197,27 +1192,6 @@ namespace RD_Tools
                 Margin = new Padding(0, 0, 0, 8)
             };
 
-            // Progress Bar Header
-            lblProgressTitle = new Label
-            {
-                Text = "📈 전체 작업 진행률:",
-                Dock = DockStyle.Top,
-                AutoSize = true,
-                Font = new Font("Malgun Gothic", 9f, FontStyle.Bold),
-                Margin = new Padding(0, 2, 0, 4)
-            };
-
-            // Progress Bar
-            progressBar = new ProgressBar
-            {
-                Dock = DockStyle.Top,
-                Height = 16,
-                Minimum = 0,
-                Maximum = 100,
-                Value = 0,
-                Margin = new Padding(0, 0, 0, 6)
-            };
-
             // Status Description Text
             lblStatus = new Label
             {
@@ -1229,12 +1203,9 @@ namespace RD_Tools
                 Padding = new Padding(2, 0, 0, 0)
             };
 
-            statusInner.Controls.Add(lblRunningBadge);
             statusInner.Controls.Add(statsGrid);
             statusInner.Controls.Add(lblEnergyTitle);
             statusInner.Controls.Add(energyBar);
-            statusInner.Controls.Add(lblProgressTitle);
-            statusInner.Controls.Add(progressBar);
             statusInner.Controls.Add(lblStatus);
             grpStatus.Controls.Add(statusInner);
 
@@ -1403,26 +1374,7 @@ namespace RD_Tools
             ApplyThemeToGuide();
 
             // Section 5 Controls
-            if (!_isRunning)
-            {
-                if (lblRunningBadge.Text.Contains("중단") || lblRunningBadge.Text.Contains("중지"))
-                {
-                    lblRunningBadge.BackColor = Color.FromArgb(253, 236, 234);
-                    lblRunningBadge.ForeColor = Color.FromArgb(175, 45, 35);
-                }
-                else if (lblRunningBadge.Text.Contains("완료"))
-                {
-                    lblRunningBadge.BackColor = Color.FromArgb(235, 245, 238);
-                    lblRunningBadge.ForeColor = Color.FromArgb(40, 125, 75);
-                }
-                else
-                {
-                    lblRunningBadge.BackColor = theme.StatusBadgeBg;
-                    lblRunningBadge.ForeColor = theme.StatusBadgeFg;
-                }
-            }
             lblEnergyTitle.ForeColor = theme.TextPrimary;
-            lblProgressTitle.ForeColor = theme.TextPrimary;
             lblStatus.ForeColor = theme.TextSecondary;
 
             // Stat Cards
@@ -1498,29 +1450,47 @@ namespace RD_Tools
             ApplyThemeToGuide();
         }
 
+        private string FormatRemainingTime(long remainMs, string unit)
+        {
+            if (unit == "시간")
+            {
+                return $"{remainMs / 3600000.0:F2} 시간";
+            }
+            else if (unit == "분")
+            {
+                return $"{remainMs / 60000.0:F1} 분";
+            }
+            else
+            {
+                return $"{remainMs / 1000.0:F1} 초";
+            }
+        }
+
         private void RefreshDashboardInitialValues()
         {
             if (_isRunning) return;
 
             string durUnit = cboDurationUnit?.SelectedItem?.ToString() ?? "초";
+            string durValueStr = durUnit == "시간" ? $"{numDuration.Value:F2}" : $"{numDuration.Value:F1}";
             lblCompletedCount.Text = "0 회";
             lblRemainCount.Text = chkEnableCount.Checked ? $"{numCount.Value} 회" : "무제한";
-            lblRemainTime.Text = chkEnableDuration.Checked ? $"{numDuration.Value:F1} {durUnit}" : "무제한";
+            lblRemainTime.Text = chkEnableDuration.Checked ? $"{durValueStr} {durUnit}" : "무제한";
         }
 
         private void UpdateModeHint()
         {
             string durUnit = cboDurationUnit?.SelectedItem?.ToString() ?? "초";
+            string durValueStr = durUnit == "시간" ? $"{numDuration.Value:F2}" : $"{numDuration.Value:F1}";
             string intUnit = cboIntervalUnit?.SelectedItem?.ToString() ?? "초";
 
             if (chkEnableDuration.Checked && chkEnableCount.Checked)
             {
-                lblModeHint.Text = $"💡 설정: {numDuration.Value}{durUnit} 경과 또는 {numCount.Value}회 입력 중 먼저 도달 시 자동 종료됩니다. (간격: {numInterval.Value}{intUnit})";
+                lblModeHint.Text = $"💡 설정: {durValueStr}{durUnit} 경과 또는 {numCount.Value}회 입력 중 먼저 도달 시 자동 종료됩니다. (간격: {numInterval.Value}{intUnit})";
                 lblModeHint.ForeColor = _currentTheme?.IsDark == true ? Color.FromArgb(245, 180, 80) : Color.FromArgb(160, 95, 25);
             }
             else if (chkEnableDuration.Checked)
             {
-                lblModeHint.Text = $"💡 설정: {numDuration.Value}{durUnit} 동안 반복 실행 후 자동 종료됩니다. (간격: {numInterval.Value}{intUnit})";
+                lblModeHint.Text = $"💡 설정: {durValueStr}{durUnit} 동안 반복 실행 후 자동 종료됩니다. (간격: {numInterval.Value}{intUnit})";
                 lblModeHint.ForeColor = _currentTheme?.IsDark == true ? Color.FromArgb(245, 180, 80) : Color.FromArgb(160, 95, 25);
             }
             else if (chkEnableCount.Checked)
@@ -1612,72 +1582,22 @@ namespace RD_Tools
             lblStatus.Text = $"{pointName} 현재 마우스 위치 등록됨: X={p.X}, Y={p.Y}";
         }
 
-        private void SetProgressBarState(int state)
-        {
-            try
-            {
-                if (progressBar != null && progressBar.IsHandleCreated)
-                {
-                    NativeMethods.SendMessage(progressBar.Handle, NativeMethods.PBM_SETSTATE, (IntPtr)state, IntPtr.Zero);
-                }
-            }
-            catch { }
-        }
-
-        private void StopProgressBarMarquee()
-        {
-            try
-            {
-                if (progressBar != null)
-                {
-                    progressBar.MarqueeAnimationSpeed = 0;
-                    progressBar.Style = ProgressBarStyle.Blocks;
-                    if (progressBar.IsHandleCreated)
-                    {
-                        NativeMethods.SendMessage(progressBar.Handle, NativeMethods.PBM_SETMARQUEE, IntPtr.Zero, IntPtr.Zero);
-                    }
-                }
-            }
-            catch { }
-        }
-
         private void ApplyStoppedState(int currentIteration, bool isEmergency = false)
         {
-            string stopReason = isEmergency
-                ? "🚨 [Alt+F2] 비상탈출 긴급 중단됨"
-                : (_hotkeysEnabled ? "⏹ [F2] 키 또는 정지로 중단됨" : "⏹ 정지 버튼으로 중단됨");
-
-            lblRunningBadge.Text = stopReason;
-            lblRunningBadge.BackColor = Color.FromArgb(253, 236, 234);
-            lblRunningBadge.ForeColor = Color.FromArgb(175, 45, 35);
-
             energyBar.IsActive = false;
             energyBar.IsStopped = true;
             energyBar.Value = 0.0;
-            energyBar.StatusText = "⏹ 작업 중단됨";
+            energyBar.StatusText = isEmergency
+                ? "🚨 [Alt+F2] 비상탈출 긴급 중단됨"
+                : (_hotkeysEnabled ? "⏹ [F2] 키 또는 정지로 중단됨" : "⏹ 정지 버튼으로 중단됨");
 
             lblEnergyTitle.Text = "⚡ 실시간 기동 에너지 바: ⏹ 중단됨";
 
-            StopProgressBarMarquee();
-            SetProgressBarState(NativeMethods.PBST_ERROR);
-
-            bool isUnlimited = !chkEnableDuration.Checked && !chkEnableCount.Checked;
-            if (isUnlimited)
-            {
-                progressBar.Value = 0;
-                lblProgressTitle.Text = currentIteration > 0
-                    ? $"📈 전체 작업 진행률: ⏹ 작업 중단됨 (총 {currentIteration}회 입력)"
-                    : "📈 전체 작업 진행률: ⏹ 시작 전 중단됨";
-            }
-            else
-            {
-                lblProgressTitle.Text = currentIteration > 0
-                    ? $"📈 전체 작업 진행률: ⏹ 작업 중단됨 ({progressBar.Value}%, 총 {currentIteration}회 입력)"
-                    : "📈 전체 작업 진행률: ⏹ 시작 전 중단됨";
-            }
+            // Loop reset: Return to initial values instead of keeping leftovers
+            RefreshDashboardInitialValues();
 
             lblStatus.Text = currentIteration > 0
-                ? $"⏹ 작업이 중단되었습니다. (총 {currentIteration}회 입력 완료)"
+                ? $"⏹ 작업이 중단되었습니다. (총 {currentIteration}회 실행 후 루프 초기화됨)"
                 : "⏹ 작업이 시작 전 중단되었습니다.";
         }
 
@@ -1689,9 +1609,6 @@ namespace RD_Tools
             if (string.IsNullOrEmpty(text1))
             {
                 lblStatus.Text = "⚠️ 입력할 문구를 먼저 작성해 주세요.";
-                lblRunningBadge.Text = "⚠️ 문구 입력 필요";
-                lblRunningBadge.BackColor = Color.FromArgb(254, 244, 225);
-                lblRunningBadge.ForeColor = Color.FromArgb(160, 90, 20);
                 return;
             }
 
@@ -1723,6 +1640,7 @@ namespace RD_Tools
             string durUnit = cboDurationUnit.SelectedItem?.ToString() ?? "초";
             long durationMs = durUnit switch
             {
+                "시간" => (long)(numDuration.Value * 3600 * 1000),
                 "분" => (long)(numDuration.Value * 60 * 1000),
                 _ => (long)(numDuration.Value * 1000)
             };
@@ -1741,17 +1659,12 @@ namespace RD_Tools
 
             SaveCurrentSettings();
 
-            // Initial dashboard badge
+            // Initial dashboard setup
             energyBar.IsActive = false;
             energyBar.IsStopped = false;
             energyBar.Value = 0.0;
             energyBar.StatusText = "⏳ 준비 중...";
             lblEnergyTitle.Text = "⚡ 실시간 기동 에너지 바 (다음 입력 충전 게이지):";
-
-            StopProgressBarMarquee();
-            SetProgressBarState(NativeMethods.PBST_NORMAL);
-            progressBar.Value = 0;
-            lblProgressTitle.Text = "📈 전체 작업 진행률:";
 
             int currentIteration = 0;
 
@@ -1760,11 +1673,6 @@ namespace RD_Tools
                 // Start Delay / Countdown Option
                 if (!immediateStart && startDelaySec > 0)
                 {
-                    lblRunningBadge.Text = "⏳ 시작 준비 중 (카운트다운)...";
-                    lblRunningBadge.BackColor = Color.FromArgb(254, 244, 225);
-                    lblRunningBadge.ForeColor = Color.FromArgb(160, 90, 20);
-                    lblProgressTitle.Text = $"📈 전체 작업 진행률: 시작 대기 중 ({startDelaySec:F1}초)...";
-
                     int totalDelayMs = (int)(startDelaySec * 1000);
                     var delaySw = Stopwatch.StartNew();
 
@@ -1776,7 +1684,6 @@ namespace RD_Tools
                         string cancelGuide = _hotkeysEnabled ? "[F2 누르면 취소]" : "[정지 누르면 취소]";
                         lblStatus.Text = $"⏳ {remainSec:F1}초 후 입력이 시작됩니다... {cancelGuide}";
                         energyBar.StatusText = $"⏳ {remainSec:F1}초 후 시작... {cancelGuide}";
-                        lblProgressTitle.Text = $"📈 전체 작업 진행률: 시작 대기 중 ({remainSec:F1}초)...";
 
                         int step = Math.Min(100, (int)(totalDelayMs - delaySw.ElapsedMilliseconds));
                         if (step <= 0) break;
@@ -1785,13 +1692,6 @@ namespace RD_Tools
                 }
 
                 token.ThrowIfCancellationRequested();
-
-                // Active Running Badge
-                lblRunningBadge.Text = _hotkeysEnabled
-                    ? "🟢 ● 기동 중 (RUNNING) - [F2]로 즉시 정지"
-                    : "🟢 ● 기동 중 (RUNNING) - 정지 버튼으로 중지";
-                lblRunningBadge.BackColor = Color.FromArgb(232, 246, 235);
-                lblRunningBadge.ForeColor = Color.FromArgb(35, 120, 70);
 
                 energyBar.IsActive = true;
                 lblEnergyTitle.Text = "⚡ 실시간 기동 에너지 바 (다음 입력 충전 게이지):";
@@ -1880,9 +1780,7 @@ namespace RD_Tools
                     lblCompletedCount.Text = enablePoint2 ? $"{currentIteration} 회 (P1+P2)" : $"{currentIteration} 회";
                     lblRemainCount.Text = enableCount ? $"{remainCount} 회" : "무제한";
                     lblRemainTime.Text = enableDuration
-                        ? (durUnit == "분" && remainDurationMs >= 60000
-                            ? $"{remainDurationMs / 60000.0:F1} 분"
-                            : $"{remainDurationMs / 1000.0:F1} 초")
+                        ? FormatRemainingTime(remainDurationMs, durUnit)
                         : "무제한";
 
                     if (!enableDuration && !enableCount)
@@ -1890,26 +1788,10 @@ namespace RD_Tools
                         // Unlimited mode
                         string stopGuide = _hotkeysEnabled ? "[F2로 정지]" : "[정지 버튼 클릭]";
                         lblStatus.Text = $"▶ 기동 중... (입력: {currentIteration}회, 경과: {elapsedMs / 1000.0:F1}초) {stopGuide}";
-                        if (progressBar.Style != ProgressBarStyle.Marquee)
-                        {
-                            progressBar.Style = ProgressBarStyle.Marquee;
-                            progressBar.MarqueeAnimationSpeed = 30;
-                        }
-                        lblProgressTitle.Text = $"📈 전체 작업 진행률: 무제한 반복 기동 중 (총 {currentIteration}회 입력)...";
                     }
                     else if (enableDuration && enableCount)
                     {
-                        double timePercent = (double)elapsedMs / durationMs;
-                        double countPercent = (double)currentIteration / targetCount;
-                        int maxPercent = Math.Clamp((int)(Math.Max(timePercent, countPercent) * 100), 0, 100);
-
-                        lblStatus.Text = $"▶ 기동 중... [남은 시간: {remainDurationMs / 1000.0:F1}초 | 남은 횟수: {remainCount}회]";
-                        if (progressBar.Style != ProgressBarStyle.Blocks)
-                        {
-                            StopProgressBarMarquee();
-                        }
-                        progressBar.Value = maxPercent;
-                        lblProgressTitle.Text = $"📈 전체 작업 진행률 ({maxPercent}%):";
+                        lblStatus.Text = $"▶ 기동 중... [남은 시간: {FormatRemainingTime(remainDurationMs, durUnit)} | 남은 횟수: {remainCount}회]";
 
                         if (elapsedMs >= durationMs || currentIteration >= targetCount)
                         {
@@ -1918,14 +1800,7 @@ namespace RD_Tools
                     }
                     else if (enableDuration)
                     {
-                        int percent = Math.Clamp((int)((double)elapsedMs / durationMs * 100), 0, 100);
-                        lblStatus.Text = $"▶ 기동 중... [남은 시간: {remainDurationMs / 1000.0:F1}초] ({currentIteration}회 입력 완료)";
-                        if (progressBar.Style != ProgressBarStyle.Blocks)
-                        {
-                            StopProgressBarMarquee();
-                        }
-                        progressBar.Value = percent;
-                        lblProgressTitle.Text = $"📈 전체 작업 진행률 ({percent}%):";
+                        lblStatus.Text = $"▶ 기동 중... [남은 시간: {FormatRemainingTime(remainDurationMs, durUnit)}] ({currentIteration}회 입력 완료)";
 
                         if (elapsedMs >= durationMs)
                         {
@@ -1934,14 +1809,7 @@ namespace RD_Tools
                     }
                     else // enableCount
                     {
-                        int percent = Math.Clamp((int)((double)currentIteration / targetCount * 100), 0, 100);
                         lblStatus.Text = $"▶ 기동 중... [남은 횟수: {remainCount}회] ({currentIteration}/{targetCount}회 완료)";
-                        if (progressBar.Style != ProgressBarStyle.Blocks)
-                        {
-                            StopProgressBarMarquee();
-                        }
-                        progressBar.Value = percent;
-                        lblProgressTitle.Text = $"📈 전체 작업 진행률 ({percent}%):";
 
                         if (currentIteration >= targetCount)
                         {
@@ -1971,9 +1839,7 @@ namespace RD_Tools
                         if (enableDuration)
                         {
                             long liveRemainMs = Math.Max(0, durationMs - liveElapsed);
-                            lblRemainTime.Text = (durUnit == "분" && liveRemainMs >= 60000)
-                                ? $"{liveRemainMs / 60000.0:F1} 분"
-                                : $"{liveRemainMs / 1000.0:F1} 초";
+                            lblRemainTime.Text = FormatRemainingTime(liveRemainMs, durUnit);
                             if (liveRemainMs <= 0) break;
                         }
 
@@ -1989,25 +1855,15 @@ namespace RD_Tools
                 }
                 else
                 {
-                    lblRunningBadge.Text = "✔ 작업 완료";
-                    lblRunningBadge.BackColor = Color.FromArgb(235, 245, 238);
-                    lblRunningBadge.ForeColor = Color.FromArgb(40, 125, 75);
-
                     energyBar.IsActive = false;
                     energyBar.IsStopped = false;
                     energyBar.Value = 1.0;
                     energyBar.StatusText = "✔ 작업 완료";
-
                     lblEnergyTitle.Text = "⚡ 실시간 기동 에너지 바: ✔ 작업 완료";
 
-                    StopProgressBarMarquee();
-                    SetProgressBarState(NativeMethods.PBST_NORMAL);
-                    progressBar.Value = 100;
-                    lblProgressTitle.Text = "📈 전체 작업 진행률: ✔ 작업 완료 (100%)";
-
-                    lblRemainCount.Text = "0 회";
-                    if (enableDuration) lblRemainTime.Text = durUnit == "분" ? "0.0 분" : "0.0 초";
-                    lblStatus.Text = $"✔ 작업이 완료되었습니다. (총 {currentIteration}회 입력 완료)";
+                    // Loop reset: Return to initial values so next run starts from beginning!
+                    RefreshDashboardInitialValues();
+                    lblStatus.Text = $"✔ 작업이 완료되었습니다. (총 {currentIteration}회 입력 완료 후 루프 초기화됨)";
                 }
             }
             catch (OperationCanceledException)
@@ -2016,29 +1872,19 @@ namespace RD_Tools
             }
             catch (Exception ex)
             {
-                lblRunningBadge.Text = "⚠️ 오류 발생";
-                lblRunningBadge.BackColor = Color.FromArgb(253, 236, 234);
-                lblRunningBadge.ForeColor = Color.FromArgb(175, 45, 35);
-
                 energyBar.IsActive = false;
                 energyBar.IsStopped = true;
                 energyBar.Value = 0.0;
                 energyBar.StatusText = "⚠️ 오류 발생으로 중단됨";
-
                 lblEnergyTitle.Text = "⚡ 실시간 기동 에너지 바: ⚠️ 중단됨";
-
-                StopProgressBarMarquee();
-                SetProgressBarState(NativeMethods.PBST_ERROR);
-                lblProgressTitle.Text = "📈 전체 작업 진행률: ⚠️ 오류 발생으로 중단됨";
-
                 lblStatus.Text = $"오류 발생: {ex.Message}";
+                RefreshDashboardInitialValues();
             }
             finally
             {
                 InputSimulator.ReleaseStuckKeys();
                 _isRunning = false;
                 energyBar.IsActive = false;
-                StopProgressBarMarquee();
                 UpdateUIState(false);
             }
         }
@@ -2048,6 +1894,16 @@ namespace RD_Tools
             if (_isRunning && _cts != null && !_cts.IsCancellationRequested)
             {
                 _cts.Cancel();
+            }
+            else if (!_isRunning)
+            {
+                RefreshDashboardInitialValues();
+                energyBar.IsActive = false;
+                energyBar.IsStopped = false;
+                energyBar.Value = 0.0;
+                energyBar.StatusText = "⚪ 대기 중 (준비 완료)";
+                lblEnergyTitle.Text = "⚡ 실시간 기동 에너지 바 (다음 입력 충전 게이지):";
+                lblStatus.Text = "상태: 준비 완료 (루프 초기화됨)";
             }
         }
 
@@ -2147,6 +2003,29 @@ namespace RD_Tools
             {
                 cboDurationUnit.SelectedItem = _settings.DurationUnit;
             }
+            string curDurUnit = cboDurationUnit.SelectedItem?.ToString() ?? "초";
+            if (curDurUnit == "시간")
+            {
+                numDuration.Minimum = 0.01m;
+                numDuration.Maximum = 720m;
+                numDuration.Increment = 0.1m;
+                numDuration.DecimalPlaces = 2;
+            }
+            else if (curDurUnit == "분")
+            {
+                numDuration.Minimum = 0.1m;
+                numDuration.Maximum = 1440m;
+                numDuration.Increment = 0.5m;
+                numDuration.DecimalPlaces = 1;
+            }
+            else
+            {
+                numDuration.Minimum = 0.5m;
+                numDuration.Maximum = 86400m;
+                numDuration.Increment = 1m;
+                numDuration.DecimalPlaces = 1;
+            }
+
             chkEnableDuration.Checked = _settings.EnableDuration;
             numDuration.Value = Math.Clamp(_settings.DurationSeconds, numDuration.Minimum, numDuration.Maximum);
             numDuration.Enabled = _settings.EnableDuration;
