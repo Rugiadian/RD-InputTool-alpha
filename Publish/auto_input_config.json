@@ -22,5 +22,17 @@
   "ClickDelayMs": 100,
   "AlwaysOnTop": true,
   "EnableHotkeys": false,
-  "SelectedTheme": "\uC544\uC774\uBCF4\uB9AC \uC6DC"
+  "SelectedTheme": "\uC544\uC774\uBCF4\uB9AC \uC6DC",
+  "HotkeyStart": {
+    "Modifier": "None",
+    "Key": "F1"
+  },
+  "HotkeyStop": {
+    "Modifier": "None",
+    "Key": "F2"
+  },
+  "HotkeyEmergency": {
+    "Modifier": "Alt",
+    "Key": "F4"
+  }
 }
