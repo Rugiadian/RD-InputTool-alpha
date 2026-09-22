@@ -24,7 +24,7 @@
   "EnableHotkeys": true,
   "SelectedTheme": "\uC544\uC774\uBCF4\uB9AC \uC6DC",
   "HotkeyStart": {
-    "Modifier": "Alt",
+    "Modifier": "None",
     "Key": "F1"
   },
   "HotkeyStop": {
