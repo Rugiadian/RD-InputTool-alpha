@@ -1,7 +1,13 @@
 # Visual Studio / .NET Build Artifacts
 [Bb]in/
 [Oo]bj/
-# [Pp]ublish/
+# [Pp]ublish/ (Release binaries folder)
+
+# Backup and temp files
+*.bak
+*.tmp
+[Tt]emp/
+[Tt]mp/
 
 # Visual Studio files
 .vs/
@@ -25,16 +31,13 @@
 *.log
 
 # Temporary / OS files
-[Tt]emp/
-[Tt]mp/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
 .DS_Store
 
-# User configs
+# User configs & local runtime state
 appsettings.json
-Publish/auto_input_config.json
-Publish/auto_input_config.json
+auto_input_config.json
 Publish/auto_input_config.json
